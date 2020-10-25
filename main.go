@@ -10,38 +10,11 @@ import (
 	"time"
 )
 
-var alfabeto = []rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
-
-func compute(prefix int, n int, a string, wgFather *sync.WaitGroup) {
-	defer wgFather.Done()
-
-	if prefix == n-1 {
-		for _, d := range alfabeto {
-			password := fmt.Sprintf("%s%c", a, d)
-
-			if searchPassword(password) {
-				if len(passwords) == 0 {
-					return
-				}
-			}
-		}
-	} else {
-		for i := range alfabeto {
-			wgFather.Add(1)
-			if prefix == 0 {
-				go compute(prefix+1, n, fmt.Sprintf("%s%c", a, alfabeto[i]), wgFather)
-			} else {
-				compute(prefix+1, n, fmt.Sprintf("%s%c", a, alfabeto[i]), wgFather)
-			}
-		}
-	}
-}
-
+var CHARS = []rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
 var passwords []string
 
 func main() {
-
-	if loadPasswords() {
+	if loadHashes() {
 		return
 	}
 	fmt.Println("File with passwords loaded. We're gonna crack", len(passwords), "passwords!")
@@ -62,6 +35,31 @@ func main() {
 
 }
 
+func compute(prefix int, n int, a string, wgFather *sync.WaitGroup) {
+	defer wgFather.Done()
+
+	if prefix == n-1 {
+		for _, d := range CHARS {
+			password := fmt.Sprintf("%s%c", a, d)
+
+			if searchPassword(password) {
+				if len(passwords) == 0 {
+					return
+				}
+			}
+		}
+	} else {
+		for i := range CHARS {
+			wgFather.Add(1)
+			if prefix == 0 {
+				go compute(prefix+1, n, fmt.Sprintf("%s%c", a, CHARS[i]), wgFather)
+			} else {
+				compute(prefix+1, n, fmt.Sprintf("%s%c", a, CHARS[i]), wgFather)
+			}
+		}
+	}
+}
+
 func searchPassword(pass string) bool {
 	hash := fmt.Sprintf("%x", md5.Sum([]byte(pass)))
 	for i, value := range passwords {
@@ -75,7 +73,7 @@ func searchPassword(pass string) bool {
 	return false
 }
 
-func loadPasswords() bool {
+func loadHashes() bool {
 	stream, err := ioutil.ReadFile("file.txt")
 	if err != nil {
 		log.Fatal(err)
