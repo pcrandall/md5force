@@ -12,6 +12,7 @@ import (
 
 var CHARS = []rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
 var passwords []string
+var wg sync.WaitGroup
 
 func main() {
 	if loadHashes() {
@@ -19,17 +20,14 @@ func main() {
 	}
 	fmt.Println("File with passwords loaded. We're gonna crack", len(passwords), "passwords!")
 	start := time.Now()
-
 	cont := 2
-	for len(passwords) > 0 {
+	for len(passwords) > 1 {
 		fmt.Println("Searching for passwords at length: ", cont)
-		var wg sync.WaitGroup
 		wg.Add(1)
 		go compute(0, cont, "", &wg)
 		wg.Wait()
 		cont++
 	}
-
 	elapsed := time.Since(start)
 	fmt.Println("Password's file cracked in:", elapsed)
 
@@ -80,7 +78,6 @@ func loadHashes() bool {
 		return true
 	}
 	readstring := string(stream)
-
 	passwords = strings.Split(readstring, "\n")
 	return false
 }
